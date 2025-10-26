@@ -5,7 +5,7 @@ type Order struct {
 	ProductId  string `gorm:"column:product_id"`
 	TotalPrice int64  `gorm:"column:total_price"`
 	Status     string `gorm:"column:status"`
-	CreatedAt  string `gorm:"column:created_at;autoCreateTime:milli"`
+	CreatedAt  int64 `gorm:"column:created_at;autoCreateTime:milli"`
 }
 
 func (c *Order) TableName() string {
