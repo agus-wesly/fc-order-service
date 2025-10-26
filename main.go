@@ -1,30 +1,20 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"fmt"
 	"log"
+	"order-service/config"
 )
 
-type Order struct {
-	ProductId  string `json:"product_id"`
-	TotalPrice int `json:"total_price"`
-	Status     string `json:"status"`
-}
-
 func main() {
-	app := fiber.New()
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World")
+	app := config.NewFiber()
+
+	config.Bootstrap(&config.BootstrapConfig{
+		App: app,
 	})
 
-	app.Post("/orders", func(c *fiber.Ctx) error {
-		order := new(Order)
-		if err := c.BodyParser(order); err != nil {
-			return err
-		}
-
-		return c.Status(fiber.StatusOK).JSON(order)
-	})
-
-	app.Listen(":5959")
+	err := app.Listen(fmt.Sprintf(":%d", config.APP_PORT))
+	if err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
