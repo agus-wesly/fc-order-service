@@ -3,24 +3,26 @@ package service
 import (
 	"order-service/internal/entity"
 	"order-service/internal/model"
+	"order-service/internal/model/converter"
 	"order-service/internal/repository"
 
 	"context"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type OrderService struct {
-	orderRepository *repository.OrderRepository
+	DB              *gorm.DB
+	OrderRepository *repository.OrderRepository
 }
 
-func NewOrderService() *OrderService {
+func NewOrderService(db *gorm.DB, orderRepository *repository.OrderRepository) *OrderService {
 	return &OrderService{
-		// Repository
+		DB:              db,
+		OrderRepository: orderRepository,
 	}
-}
-
-type Order struct {
 }
 
 func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderRequest) (*model.OrderResponse, error) {
@@ -31,7 +33,7 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		Status:     request.Status,
 	}
 
-	if err := c.orderRepository.Create(order); err != nil {
+	if err := c.OrderRepository.Create(c.DB, order); err != nil {
 		return nil, fiber.ErrInternalServerError
 	}
 
