@@ -8,8 +8,10 @@ import (
 
 func main() {
 	app := config.NewFiber()
+	db := config.NewDatabase()
 
 	config.Bootstrap(&config.BootstrapConfig{
+		DB: db,
 		App: app,
 	})
 
