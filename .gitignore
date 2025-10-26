@@ -40,3 +40,5 @@ Thumbs.db
 main
 
 /docs/*
+
+.air.toml
