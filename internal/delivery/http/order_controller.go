@@ -1,22 +1,33 @@
 package http
 
 import (
-	"order-service/internal/service"
+	"log"
 	"github.com/gofiber/fiber/v2"
+	"order-service/internal/model"
+	"order-service/internal/service"
 )
 
-type OrderController struct{
-	orderService *service.OrderService
+type OrderController struct {
+	OrderService *service.OrderService
 }
 
-func NewOrderController() *OrderController {
-	return &OrderController{}
+func NewOrderController(orderService *service.OrderService) *OrderController {
+	return &OrderController{
+		OrderService: orderService,
+	}
 }
-
 
 func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	request := new(model.CreateOrderRequest)
 	if err := ctx.BodyParser(request); err != nil {
 		return err
 	}
+
+	response, err := c.OrderService.Create(ctx.UserContext(), request)
+	if err != nil {
+		log.Println("error creating contact")
+		return err
+	}
+
+	return ctx.JSON(response)
 }

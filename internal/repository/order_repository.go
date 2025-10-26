@@ -8,10 +8,10 @@ import (
 
 type OrderRepository struct {}
 
-func CreateOrderRepository() *OrderRepository {
+func NewOrderRepository() *OrderRepository {
 	return &OrderRepository{}
 }
 
-func (r *OrderRepository) Create(db *gorm.DB, entity entity.Order) error {
+func (r *OrderRepository) Create(db *gorm.DB, entity *entity.Order) error {
 	return db.Create(entity).Error
 }

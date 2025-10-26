@@ -9,6 +9,6 @@ type CreateOrderRequest struct {
 type OrderResponse struct {
 	Id         string `json:"id"`
 	ProductId  string `json:"product_id"`
-	TotalPrice int    `json:"total_price"`
+	TotalPrice int64    `json:"total_price"`
 	Status     string `json:"status"`
 }
