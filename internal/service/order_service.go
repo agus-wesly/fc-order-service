@@ -8,6 +8,7 @@ import (
 	"order-service/internal/repository"
 
 	"context"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -42,6 +43,24 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	}
 
 	if err := c.OrderRepository.Create(c.DB, order); err != nil {
+		log.Println("error creating order")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.OrderToResponse(order), nil
+}
+
+func (c *OrderService) GetByProductId(ctx context.Context, request *model.GetOrderByIdRequest) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	order := new(entity.Order)
+	if err := c.OrderRepository.FindByProductId(tx, order, request.Id); err != nil {
+		return nil, fiber.ErrNotFound
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Println("error getting order")
 		return nil, fiber.ErrInternalServerError
 	}
 

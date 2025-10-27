@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"github.com/gofiber/fiber/v2"
 	"order-service/internal/model"
 	"order-service/internal/service"
@@ -25,7 +24,19 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 
 	response, err := c.OrderService.Create(ctx.UserContext(), request)
 	if err != nil {
-		log.Println("error creating contact")
+		return err
+	}
+
+	return ctx.JSON(response)
+}
+
+func (c *OrderController) GetByProductId(ctx *fiber.Ctx) error {
+	request := &model.GetOrderByIdRequest{
+		Id: ctx.Params("productId"),
+	}
+
+	response, err := c.OrderService.GetByProductId(ctx.UserContext(), request)
+	if err != nil {
 		return err
 	}
 

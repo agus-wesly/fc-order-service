@@ -12,4 +12,5 @@ type RouteConfig struct {
 
 func (c *RouteConfig) Setup() {
 	c.App.Post("/orders", c.OrderController.Create)
+	c.App.Get("/orders/product/:productId", c.OrderController.GetByProductId)
 }

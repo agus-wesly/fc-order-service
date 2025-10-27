@@ -4,6 +4,11 @@ type CreateOrderRequest struct {
 	ProductId  string `json:"productId" validate:"required,uuid"`
 }
 
+type GetOrderByIdRequest struct {
+	Id string `json:"-" validate:"required"`
+
+}
+
 type OrderResponse struct {
 	Id         string `json:"id"`
 	ProductId  string `json:"productId"`
