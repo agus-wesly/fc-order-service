@@ -33,6 +33,8 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
+	// TODO : validate input
+
 	orderResponse, err := c.ProductGateway.GetProductInfo(request.ProductId)
 	if err != nil {
 		return nil, err
@@ -44,6 +46,8 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		TotalPrice: orderResponse.Price,
 		Status:     "CREATED",
 	}
+
+	// TODO : publish
 
 	if err := c.OrderRepository.Create(tx, order); err != nil {
 		log.Println("error creating order")
@@ -58,6 +62,7 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	return converter.OrderToResponse(order), nil
 }
 
+// TODO : setup caching
 func (c *OrderService) GetByProductId(ctx context.Context, request *model.GetOrderByProductIdRequest) (*model.GetOrdersByProductIdResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
