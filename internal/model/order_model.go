@@ -4,7 +4,7 @@ type CreateOrderRequest struct {
 	ProductId  string `json:"productId" validate:"required,uuid"`
 }
 
-type GetOrderByIdRequest struct {
+type GetOrderByProductIdRequest struct {
 	Id string `json:"-" validate:"required"`
 
 }
@@ -14,4 +14,8 @@ type OrderResponse struct {
 	ProductId  string `json:"productId"`
 	TotalPrice int64    `json:"totalPrice"`
 	Status     string `json:"status"`
+}
+
+type GetOrdersByProductIdResponse struct {
+	Orders []*OrderResponse `json:"orders"`
 }

@@ -31,7 +31,7 @@ func (c *OrderController) Create(ctx *fiber.Ctx) error {
 }
 
 func (c *OrderController) GetByProductId(ctx *fiber.Ctx) error {
-	request := &model.GetOrderByIdRequest{
+	request := &model.GetOrderByProductIdRequest{
 		Id: ctx.Params("productId"),
 	}
 

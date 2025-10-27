@@ -16,6 +16,6 @@ func (r *OrderRepository) Create(db *gorm.DB, entity *entity.Order) error {
 	return db.Create(entity).Error
 }
 
-func (r *OrderRepository) FindByProductId(db *gorm.DB, order *entity.Order, id string) error {
-	return db.Where("product_id = ?", id).Take(order).Error
+func (r *OrderRepository) FindByProductId(db *gorm.DB, orders *[]entity.Order, id string) error {
+	return db.Where("product_id = ?", id).Find(orders).Error
 }
