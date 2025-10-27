@@ -30,6 +30,9 @@ func NewOrderService(db *gorm.DB, orderRepository *repository.OrderRepository, p
 }
 
 func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderRequest) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
 	orderResponse, err := c.ProductGateway.GetProductInfo(request.ProductId)
 	if err != nil {
 		return nil, err
@@ -42,7 +45,12 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		Status:     "CREATED",
 	}
 
-	if err := c.OrderRepository.Create(c.DB, order); err != nil {
+	if err := c.OrderRepository.Create(tx, order); err != nil {
+		log.Println("error creating order")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		log.Println("error creating order")
 		return nil, fiber.ErrInternalServerError
 	}
