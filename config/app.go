@@ -3,8 +3,10 @@ package config
 import (
 	"order-service/internal/delivery/http"
 	"order-service/internal/delivery/http/route"
+	"order-service/internal/gateway/http"
 	"order-service/internal/repository"
 	"order-service/internal/service"
+	"order-service/pkg/dotenv"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -18,8 +20,9 @@ type BootstrapConfig struct {
 }
 
 func Bootstrap(config *BootstrapConfig) {
+	productGateway := httpgateway.NewProductGateway(dotenv.Getenv("PRODUCT_SERVICE_URL"))
 	orderRepository := repository.NewOrderRepository()
-	orderService := service.NewOrderService(config.DB, orderRepository)
+	orderService := service.NewOrderService(config.DB, orderRepository, productGateway)
 	orderController := http.NewOrderController(orderService)
 
 	routeConfig := route.RouteConfig{
