@@ -53,6 +53,30 @@ func (r *OrderRepository) FindByProductId(db *gorm.DB, ctx context.Context, orde
 	return nil
 }
 
+func (r *OrderRepository) FindById(db *gorm.DB, ctx context.Context, order *entity.Order, id string) error {
+	key := r.getKeyWithPrefix("id", id)
+	orderBytes, err := r.cache.Get(ctx, key).Bytes()
+	if err == nil {
+		if err = json.Unmarshal(orderBytes, order); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if err := db.Where("id = ?", id).Take(order).Error; err != nil {
+		return err
+	}
+	if orderBytes, err = json.Marshal(order); err != nil {
+		return err
+	}
+
+	if err = r.cache.Set(ctx, key, orderBytes, time.Second*time.Duration(tTLSecond)).Err(); err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func (r *OrderRepository) getKeyWithPrefix(category string, key string) string {
 	return fmt.Sprintf("%s-%s: %s", basePrefix, category, key)
 }

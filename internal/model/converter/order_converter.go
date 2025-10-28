@@ -11,6 +11,7 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 		ProductId:  order.ProductId,
 		TotalPrice: order.TotalPrice,
 		Status:     order.Status,
+		CreatedAt:  order.CreatedAt,
 	}
 }
 
