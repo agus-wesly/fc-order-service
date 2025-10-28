@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log"
 	"github.com/gofiber/fiber/v2"
 	"order-service/internal/model"
 	"order-service/internal/service"
@@ -19,7 +20,8 @@ func NewOrderController(orderService *service.OrderService) *OrderController {
 func (c *OrderController) Create(ctx *fiber.Ctx) error {
 	request := new(model.CreateOrderRequest)
 	if err := ctx.BodyParser(request); err != nil {
-		return err
+		log.Println("error parsing request body")
+		return fiber.ErrBadRequest
 	}
 
 	response, err := c.OrderService.Create(ctx.UserContext(), request)

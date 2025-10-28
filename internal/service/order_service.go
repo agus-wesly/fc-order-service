@@ -10,6 +10,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -19,13 +20,15 @@ type OrderService struct {
 	DB              *gorm.DB
 	OrderRepository *repository.OrderRepository
 	ProductGateway  *httpgateway.ProductGateway
+	Validate        *validator.Validate
 }
 
-func NewOrderService(db *gorm.DB, orderRepository *repository.OrderRepository, productGateway *httpgateway.ProductGateway) *OrderService {
+func NewOrderService(db *gorm.DB, validate *validator.Validate, orderRepository *repository.OrderRepository, productGateway *httpgateway.ProductGateway) *OrderService {
 	return &OrderService{
 		DB:              db,
 		OrderRepository: orderRepository,
 		ProductGateway:  productGateway,
+		Validate:        validate,
 	}
 }
 
@@ -33,7 +36,10 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	// TODO : validate input
+	if err := c.Validate.Struct(request); err != nil {
+		log.Println("error validating request body")
+		return nil, fiber.ErrBadRequest
+	}
 
 	orderResponse, err := c.ProductGateway.GetProductInfo(request.ProductId)
 	if err != nil {
