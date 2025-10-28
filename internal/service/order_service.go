@@ -49,6 +49,10 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		return nil, err
 	}
 
+	if orderResponse.Price <= 0 {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Product quantity is running out")
+	}
+
 	order := &entity.Order{
 		Id:         uuid.New().String(),
 		ProductId:  orderResponse.Id,
@@ -67,7 +71,7 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	}
 
 	c.OrderProducer.Send("order.created", &model.OrderEvent{
-		Id: order.Id,
+		Id:        order.Id,
 		ProductId: order.ProductId,
 	})
 
@@ -89,4 +93,21 @@ func (c *OrderService) GetByProductId(ctx context.Context, request *model.GetOrd
 	}
 
 	return converter.OrdersToResponse(orders), nil
+}
+
+func (c *OrderService) GetById(ctx context.Context, request *model.GetOrderByIdRequest) (*model.OrderResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	order := new(entity.Order)
+	if err := c.OrderRepository.FindById(tx, ctx, order, request.Id); err != nil {
+		return nil, fiber.ErrNotFound
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Println("error getting order")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.OrderToResponse(order), nil
 }
