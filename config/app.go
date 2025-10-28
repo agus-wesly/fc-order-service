@@ -4,9 +4,11 @@ import (
 	"order-service/internal/delivery/http"
 	"order-service/internal/delivery/http/route"
 	"order-service/internal/gateway/http"
+	"order-service/internal/gateway/messaging"
 	"order-service/internal/repository"
 	"order-service/internal/service"
 	"order-service/pkg/dotenv"
+	"order-service/pkg/rabbitmq"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -21,12 +23,18 @@ type BootstrapConfig struct {
 	App      *fiber.App
 	Validate *validator.Validate
 	Cache    *redis.Client
+	Producer *rabbitmq.RabbitMQProducer
 }
 
 func Bootstrap(config *BootstrapConfig) {
-	productGateway := httpgateway.NewProductGateway(dotenv.Getenv("PRODUCT_SERVICE_URL"))
 	orderRepository := repository.NewOrderRepository(config.Cache)
-	orderService := service.NewOrderService(config.DB, config.Validate, orderRepository, productGateway)
+
+	orderProducer := messaging.NewOrderProducer(config.Producer)
+
+	productGateway := httpgateway.NewProductGateway(dotenv.Getenv("PRODUCT_SERVICE_URL"))
+
+	orderService := service.NewOrderService(config.DB, config.Validate, orderRepository, orderProducer, productGateway)
+
 	orderController := http.NewOrderController(orderService)
 
 	routeConfig := route.RouteConfig{

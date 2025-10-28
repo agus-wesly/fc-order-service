@@ -3,6 +3,7 @@ package service
 import (
 	"order-service/internal/entity"
 	"order-service/internal/gateway/http"
+	"order-service/internal/gateway/messaging"
 	"order-service/internal/model"
 	"order-service/internal/model/converter"
 	"order-service/internal/repository"
@@ -21,14 +22,16 @@ type OrderService struct {
 	OrderRepository *repository.OrderRepository
 	ProductGateway  *httpgateway.ProductGateway
 	Validate        *validator.Validate
+	OrderProducer   *messaging.OrderProducer
 }
 
-func NewOrderService(db *gorm.DB, validate *validator.Validate, orderRepository *repository.OrderRepository, productGateway *httpgateway.ProductGateway) *OrderService {
+func NewOrderService(db *gorm.DB, validate *validator.Validate, orderRepository *repository.OrderRepository, orderProducer *messaging.OrderProducer, productGateway *httpgateway.ProductGateway) *OrderService {
 	return &OrderService{
 		DB:              db,
 		OrderRepository: orderRepository,
 		ProductGateway:  productGateway,
 		Validate:        validate,
+		OrderProducer:   orderProducer,
 	}
 }
 
@@ -53,8 +56,6 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		Status:     "CREATED",
 	}
 
-	// TODO : publish
-
 	if err := c.OrderRepository.Create(tx, order); err != nil {
 		log.Println("error creating order")
 		return nil, fiber.ErrInternalServerError
@@ -64,6 +65,12 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		log.Println("error creating order")
 		return nil, fiber.ErrInternalServerError
 	}
+
+	// TODO : publish
+	c.OrderProducer.Send("order.created", &model.OrderEvent{
+		Id: order.Id,
+		ProductId: order.ProductId,
+	})
 
 	return converter.OrderToResponse(order), nil
 }
