@@ -66,7 +66,6 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		return nil, fiber.ErrInternalServerError
 	}
 
-	// TODO : publish
 	c.OrderProducer.Send("order.created", &model.OrderEvent{
 		Id: order.Id,
 		ProductId: order.ProductId,
