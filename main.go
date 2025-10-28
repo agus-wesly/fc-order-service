@@ -11,10 +11,8 @@ import (
 func main() {
 	app := config.NewFiber()
 	db := config.NewDatabase()
-	// TODO : setup defer to close db
 	validate := config.NewValidator()
 	cache := config.NewRedis()
-	// TODO : setup defer to close cache
 	producer := config.NewRabbitMqProducer()
 
 	migrations.Start()
@@ -26,6 +24,17 @@ func main() {
 		Cache:    cache,
 		Producer: producer,
 	})
+
+	// Resource cleanup
+	defer func() {
+		if sqlDB, err := db.DB(); err == nil {
+			sqlDB.Close()
+		}
+
+		cache.Close()
+		producer.Connection.Close()
+		producer.Channel.Close()
+	}()
 
 	err := app.Listen(fmt.Sprintf(":%d", config.APP_PORT))
 	if err != nil {
