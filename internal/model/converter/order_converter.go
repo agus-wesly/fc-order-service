@@ -15,14 +15,14 @@ func OrderToResponse(order *entity.Order) *model.OrderResponse {
 	}
 }
 
-func OrdersToResponse(ordersPtr *[]entity.Order) *model.GetOrdersByProductIdResponse {
+func OrdersToResponse(ordersPtr *[]entity.Order) *model.OrderListResponse {
 	orders := *ordersPtr
 	orderResponses := make([]*model.OrderResponse, len(orders))
 	for i := range len(orders) {
 		orderResponses[i] = OrderToResponse(&orders[i])
 	}
 
-	return &model.GetOrdersByProductIdResponse{
+	return &model.OrderListResponse{
 		Orders: orderResponses,
 	}
 }

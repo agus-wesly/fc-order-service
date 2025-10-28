@@ -78,12 +78,29 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	return converter.OrderToResponse(order), nil
 }
 
-func (c *OrderService) GetByProductId(ctx context.Context, request *model.GetOrderByProductIdRequest) (*model.GetOrdersByProductIdResponse, error) {
+func (c *OrderService) GetByProductId(ctx context.Context, request *model.GetOrderByProductIdRequest) (*model.OrderListResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	orders := new([]entity.Order)
 	if err := c.OrderRepository.FindByProductId(tx, ctx, orders, request.Id); err != nil {
+		return nil, fiber.ErrNotFound
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		log.Println("error getting order")
+		return nil, fiber.ErrInternalServerError
+	}
+
+	return converter.OrdersToResponse(orders), nil
+}
+
+func (c *OrderService) Get(ctx context.Context) (*model.OrderListResponse, error) {
+	tx := c.DB.WithContext(ctx).Begin()
+	defer tx.Rollback()
+
+	orders := new([]entity.Order)
+	if err := c.OrderRepository.List(tx, ctx, orders); err != nil {
 		return nil, fiber.ErrNotFound
 	}
 

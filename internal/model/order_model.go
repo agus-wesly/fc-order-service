@@ -20,6 +20,6 @@ type OrderResponse struct {
 	CreatedAt  int64 `json:"createdAt"`
 }
 
-type GetOrdersByProductIdResponse struct {
+type OrderListResponse struct {
 	Orders []*OrderResponse `json:"orders"`
 }

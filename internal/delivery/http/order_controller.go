@@ -45,6 +45,15 @@ func (c *OrderController) GetByProductId(ctx *fiber.Ctx) error {
 	return ctx.JSON(response)
 }
 
+func (c *OrderController) Get(ctx *fiber.Ctx) error {
+	response, err := c.OrderService.Get(ctx.UserContext())
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(response)
+}
+
 func (c *OrderController) GetById(ctx *fiber.Ctx) error {
 	request := &model.GetOrderByIdRequest{
 		Id: ctx.Params("id"),

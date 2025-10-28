@@ -53,6 +53,10 @@ func (r *OrderRepository) FindByProductId(db *gorm.DB, ctx context.Context, orde
 	return nil
 }
 
+func (r *OrderRepository) List(db *gorm.DB, ctx context.Context, orders *[]entity.Order) error {
+	return db.Find(orders).Error
+}
+
 func (r *OrderRepository) FindById(db *gorm.DB, ctx context.Context, order *entity.Order, id string) error {
 	key := r.getKeyWithPrefix("id", id)
 	orderBytes, err := r.cache.Get(ctx, key).Bytes()
