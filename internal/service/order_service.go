@@ -49,7 +49,7 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 		return nil, err
 	}
 
-	if orderResponse.Price <= 0 {
+	if orderResponse.Qty <= 0 {
 		return nil, fiber.NewError(fiber.StatusBadRequest, "Product quantity is running out")
 	}
 
