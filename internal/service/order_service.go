@@ -68,13 +68,12 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	return converter.OrderToResponse(order), nil
 }
 
-// TODO : setup caching
 func (c *OrderService) GetByProductId(ctx context.Context, request *model.GetOrderByProductIdRequest) (*model.GetOrdersByProductIdResponse, error) {
 	tx := c.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	orders := new([]entity.Order)
-	if err := c.OrderRepository.FindByProductId(tx, orders, request.Id); err != nil {
+	if err := c.OrderRepository.FindByProductId(tx, ctx, orders, request.Id); err != nil {
 		return nil, fiber.ErrNotFound
 	}
 

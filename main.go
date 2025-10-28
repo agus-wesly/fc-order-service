@@ -11,14 +11,18 @@ import (
 func main() {
 	app := config.NewFiber()
 	db := config.NewDatabase()
+	// TODO : setup defer to close db
 	validate := config.NewValidator()
+	cache := config.NewRedis()
+	// TODO : setup defer to close cache
 
 	migrations.Start()
 
 	config.Bootstrap(&config.BootstrapConfig{
-		DB:  db,
-		App: app,
+		DB:       db,
+		App:      app,
 		Validate: validate,
+		Cache:    cache,
 	})
 
 	err := app.Listen(fmt.Sprintf(":%d", config.APP_PORT))
