@@ -16,21 +16,28 @@ const (
 	tTLSecond  = 5
 )
 
-type OrderRepository struct {
+type OrderRepository interface {
+	Create(db *gorm.DB, entity *entity.Order) error
+	FindByProductId(db *gorm.DB, ctx context.Context, orders *[]entity.Order, productId string) error
+	List(db *gorm.DB, ctx context.Context, orders *[]entity.Order) error
+	FindById(db *gorm.DB, ctx context.Context, order *entity.Order, id string) error
+}
+
+type orderRepository struct {
 	cache *redis.Client
 }
 
-func NewOrderRepository(cache *redis.Client) *OrderRepository {
-	return &OrderRepository{
+func NewOrderRepository(cache *redis.Client) OrderRepository {
+	return &orderRepository{
 		cache: cache,
 	}
 }
 
-func (r *OrderRepository) Create(db *gorm.DB, entity *entity.Order) error {
+func (r *orderRepository) Create(db *gorm.DB, entity *entity.Order) error {
 	return db.Create(entity).Error
 }
 
-func (r *OrderRepository) FindByProductId(db *gorm.DB, ctx context.Context, orders *[]entity.Order, productId string) error {
+func (r *orderRepository) FindByProductId(db *gorm.DB, ctx context.Context, orders *[]entity.Order, productId string) error {
 	key := r.getKeyWithPrefix("productId", productId)
 	ordersBytes, err := r.cache.Get(ctx, key).Bytes()
 	if err == nil {
@@ -53,11 +60,11 @@ func (r *OrderRepository) FindByProductId(db *gorm.DB, ctx context.Context, orde
 	return nil
 }
 
-func (r *OrderRepository) List(db *gorm.DB, ctx context.Context, orders *[]entity.Order) error {
+func (r *orderRepository) List(db *gorm.DB, ctx context.Context, orders *[]entity.Order) error {
 	return db.Find(orders).Error
 }
 
-func (r *OrderRepository) FindById(db *gorm.DB, ctx context.Context, order *entity.Order, id string) error {
+func (r *orderRepository) FindById(db *gorm.DB, ctx context.Context, order *entity.Order, id string) error {
 	key := r.getKeyWithPrefix("id", id)
 	orderBytes, err := r.cache.Get(ctx, key).Bytes()
 	if err == nil {
@@ -81,6 +88,6 @@ func (r *OrderRepository) FindById(db *gorm.DB, ctx context.Context, order *enti
 
 }
 
-func (r *OrderRepository) getKeyWithPrefix(category string, key string) string {
+func (r *orderRepository) getKeyWithPrefix(category string, key string) string {
 	return fmt.Sprintf("%s-%s: %s", basePrefix, category, key)
 }

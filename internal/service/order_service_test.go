@@ -2,82 +2,74 @@ package service_test
 
 import (
 	"context"
-	"order-service/internal/entity"
-	"order-service/internal/model"
-	"order-service/internal/service"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-playground/validator/v10"
+	gomock "go.uber.org/mock/gomock"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"order-service/internal/mocks"
+	"order-service/internal/model"
+	"order-service/internal/service"
 )
 
-type MockDB struct {
-	mock.Mock
-}
-
-func (m *MockDB) WithContext(ctx context.Context) *MockDB {
-	return m
-}
-func (m *MockDB) Begin() *MockDB {
-	return m
-}
-func (m *MockDB) Commit() *MockDB {
-	m.Called()
-	return m
-}
-func (m *MockDB) Rollback() {}
-
-type MockProductGateway struct{ mock.Mock }
-func (m *MockProductGateway) GetProductInfo(id string) (*model.ProductResponse, error) {
-	args := m.Called(id)
-	return args.Get(0).(*model.ProductResponse), args.Error(1)
-}
-
-type MockOrderRepository struct{ mock.Mock }
-func (m *MockOrderRepository) Create(tx any, order *entity.Order) error {
-	args := m.Called(tx, order)
-	return args.Error(0)
-}
-
-type MockOrderProducer struct{ mock.Mock }
-func (m *MockOrderProducer) Send(event string, payload *model.OrderEvent) {
-	m.Called(event, payload)
-}
-
-// --- Fake validator ---
-type FakeValidator struct{}
-func (v *FakeValidator) Struct(i interface{}) error { return nil }
-
+/*
+mockgen -source=internal/repository/order_repository.go -destination=internal/mocks/mock_order_repository.go -package=mocks
+*/
 
 func TestOrderService_Create_Success(t *testing.T) {
-	mockDB := new(MockDB)
-	mockRepo := new(MockOrderRepository)
-	mockGateway := new(MockProductGateway)
-	mockProducer := new(MockOrderProducer)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockDB.On("Commit").Return(mockDB)
-	mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
-	mockGateway.On("GetProductInfo", "prod-1").Return(&model.ProductResponse{
-		Id:    "prod-1",
-		Price: 1000,
-		Qty:   10,
-	}, nil)
-	mockProducer.On("Send", "order.created", mock.Anything).Return()
-
-	orderService := &service.OrderService{
-		DB:              mockDB,
-		Validate:        &FakeValidator{},
-		OrderRepository: mockRepo,
-		ProductGateway:  mockGateway,
-		OrderProducer:   mockProducer,
+	sqlDB, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	req := &model.CreateOrderRequest{ProductId: "prod-1"}
-	resp, err := orderService.Create(context.Background(), req)
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		Conn:                      sqlDB,
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{})
 
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	assert.Equal(t, "prod-1", resp.ProductId)
-	mockRepo.AssertExpectations(t)
-	mockGateway.AssertExpectations(t)
-	mockProducer.AssertExpectations(t)
+	validate := validator.New()
+
+	mockRepo := mocks.NewMockOrderRepository(ctrl)
+	mockGateway := mocks.NewMockProductGatewayInterface(ctrl)
+	mockProducer := mocks.NewMockOrderProducerInterface(ctrl)
+
+	// Prepare input
+	request := &model.CreateOrderRequest{
+		ProductId: "p123",
+	}
+
+	// Mock expectations
+	mockGateway.EXPECT().
+		GetProductInfo("p123").
+		Return(&model.ProductResponse{
+			Id:    "p123",
+			Price: 5000,
+			Qty:   10,
+		}, nil)
+
+	mockRepo.EXPECT().
+		Create(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	mockProducer.EXPECT().
+		Send("order.created", gomock.Any()).
+		Times(1)
+
+	orderService := service.NewOrderService(gormDB, validate, mockRepo, mockProducer, mockGateway)
+
+	// Execute
+	resp, err := orderService.Create(context.Background(), request)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if resp == nil {
+		t.Fatalf("expected response, got nil")
+	}
 }

@@ -19,13 +19,13 @@ import (
 
 type OrderService struct {
 	DB              *gorm.DB
-	OrderRepository *repository.OrderRepository
+	OrderRepository repository.OrderRepository
 	ProductGateway  *httpgateway.ProductGateway
 	Validate        *validator.Validate
 	OrderProducer   *messaging.OrderProducer
 }
 
-func NewOrderService(db *gorm.DB, validate *validator.Validate, orderRepository *repository.OrderRepository, orderProducer *messaging.OrderProducer, productGateway *httpgateway.ProductGateway) *OrderService {
+func NewOrderService(db *gorm.DB, validate *validator.Validate, orderRepository repository.OrderRepository, orderProducer *messaging.OrderProducer, productGateway *httpgateway.ProductGateway) *OrderService {
 	return &OrderService{
 		DB:              db,
 		OrderRepository: orderRepository,
