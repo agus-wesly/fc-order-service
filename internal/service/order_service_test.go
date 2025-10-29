@@ -15,10 +15,6 @@ import (
 	"order-service/internal/service"
 )
 
-/*
-mockgen -source=internal/gateway/messaging/producer.go -destination=internal/mocks/mock_producer.go -package=mocks
-*/
-
 func TestOrderService_Create_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
