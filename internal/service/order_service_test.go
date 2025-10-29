@@ -9,20 +9,21 @@ import (
 	gomock "go.uber.org/mock/gomock"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"order-service/internal/gateway/messaging"
 	"order-service/internal/mocks"
 	"order-service/internal/model"
 	"order-service/internal/service"
 )
 
 /*
-mockgen -source=internal/repository/order_repository.go -destination=internal/mocks/mock_order_repository.go -package=mocks
+mockgen -source=internal/gateway/messaging/producer.go -destination=internal/mocks/mock_producer.go -package=mocks
 */
 
 func TestOrderService_Create_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	sqlDB, _, err := sqlmock.New()
+	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
@@ -34,20 +35,26 @@ func TestOrderService_Create_Success(t *testing.T) {
 
 	validate := validator.New()
 
-	mockRepo := mocks.NewMockOrderRepository(ctrl)
-	mockGateway := mocks.NewMockProductGatewayInterface(ctrl)
-	mockProducer := mocks.NewMockOrderProducerInterface(ctrl)
+	mock.ExpectBegin()
+	mock.ExpectCommit()
 
-	// Prepare input
-	request := &model.CreateOrderRequest{
-		ProductId: "p123",
+	mockRepo := mocks.NewMockOrderRepository(ctrl)
+	mockGateway := mocks.NewMockProductGateway(ctrl)
+	mockProducer := mocks.NewMockProducer[*model.OrderEvent](ctrl)
+	mockOrderProducer := &messaging.OrderProducer{
+		Producer: mockProducer,
 	}
 
-	// Mock expectations
+	productId := "f3b2e38a-b709-4e03-bd4d-4d0aa54619a9"
+
+	request := &model.CreateOrderRequest{
+		ProductId: productId,
+	}
+
 	mockGateway.EXPECT().
-		GetProductInfo("p123").
+		GetProductInfo(productId).
 		Return(&model.ProductResponse{
-			Id:    "p123",
+			Id:    productId,
 			Price: 5000,
 			Qty:   10,
 		}, nil)
@@ -60,12 +67,10 @@ func TestOrderService_Create_Success(t *testing.T) {
 		Send("order.created", gomock.Any()).
 		Times(1)
 
-	orderService := service.NewOrderService(gormDB, validate, mockRepo, mockProducer, mockGateway)
+	orderService := service.NewOrderService(gormDB, validate, mockRepo, mockOrderProducer, mockGateway)
 
-	// Execute
 	resp, err := orderService.Create(context.Background(), request)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

@@ -9,7 +9,11 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Producer[T model.Event] struct {
+type Producer[T model.Event] interface {
+	Send(pattern string, event T) error
+}
+
+type ProducerStruct[T model.Event] struct {
 	Producer *rabbitmq.RabbitMQProducer
 }
 
@@ -18,7 +22,7 @@ type Body[T model.Event] struct {
 	Data    T      `json:"data"`
 }
 
-func (p *Producer[T]) Send(pattern string, event T) error {
+func (p *ProducerStruct[T]) Send(pattern string, event T) error {
 	value, err := json.Marshal(p.transformEventToBody(pattern, event))
 	if err != nil {
 		log.Println("failed to marshal event")
@@ -46,7 +50,7 @@ func (p *Producer[T]) Send(pattern string, event T) error {
 // This function is needed because nest.js expects incoming message bodies
 // to have pattern field
 // See : https://stackoverflow.com/questions/56097750/nestjs-there-is-no-matching-event-handler-defined-in-the-remote-service
-func (p *Producer[T]) transformEventToBody(pattern string, event T) Body[T] {
+func (p *ProducerStruct[T]) transformEventToBody(pattern string, event T) Body[T] {
 	return Body[T]{
 		Pattern: pattern,
 		Data:    event,

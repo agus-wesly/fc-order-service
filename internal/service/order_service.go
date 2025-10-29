@@ -20,12 +20,12 @@ import (
 type OrderService struct {
 	DB              *gorm.DB
 	OrderRepository repository.OrderRepository
-	ProductGateway  *httpgateway.ProductGateway
+	ProductGateway  httpgateway.ProductGateway
 	Validate        *validator.Validate
 	OrderProducer   *messaging.OrderProducer
 }
 
-func NewOrderService(db *gorm.DB, validate *validator.Validate, orderRepository repository.OrderRepository, orderProducer *messaging.OrderProducer, productGateway *httpgateway.ProductGateway) *OrderService {
+func NewOrderService(db *gorm.DB, validate *validator.Validate, orderRepository repository.OrderRepository, orderProducer *messaging.OrderProducer, productGateway httpgateway.ProductGateway) *OrderService {
 	return &OrderService{
 		DB:              db,
 		OrderRepository: orderRepository,
@@ -40,6 +40,7 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	defer tx.Rollback()
 
 	if err := c.Validate.Struct(request); err != nil {
+		log.Println(err)
 		log.Println("error validating request body")
 		return nil, fiber.ErrBadRequest
 	}
@@ -61,12 +62,13 @@ func (c *OrderService) Create(ctx context.Context, request *model.CreateOrderReq
 	}
 
 	if err := c.OrderRepository.Create(tx, order); err != nil {
-		log.Println("error creating order")
+		log.Println("error creating order in repository")
 		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.Println("error creating order")
+		log.Println(err)
+		log.Println("error creating order in commiting transaction")
 		return nil, fiber.ErrInternalServerError
 	}
 

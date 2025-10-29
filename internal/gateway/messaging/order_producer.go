@@ -11,7 +11,7 @@ type OrderProducer struct {
 
 func NewOrderProducer(producer *rabbitmq.RabbitMQProducer) *OrderProducer {
 	return &OrderProducer{
-		Producer: Producer[*model.OrderEvent]{
+		Producer: &ProducerStruct[*model.OrderEvent]{
 			Producer: producer,
 		},
 	}

@@ -9,15 +9,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type ProductGateway struct {
+type ProductGateway interface {
+	GetProductInfo(productId string) (*model.ProductResponse, error)
+}
+
+type productGateway struct {
 	baseURL string
 }
 
-func NewProductGateway(baseURL string) *ProductGateway {
-	return &ProductGateway{baseURL: baseURL}
+func NewProductGateway(baseURL string) ProductGateway {
+	return &productGateway{baseURL: baseURL}
 }
 
-func (c *ProductGateway) GetProductInfo(productId string) (*model.ProductResponse, error) {
+func (c *productGateway) GetProductInfo(productId string) (*model.ProductResponse, error) {
 	resp, err := http.Get(fmt.Sprintf("%s/products/%s", c.baseURL, productId))
 	if err != nil {
 		return nil, err
