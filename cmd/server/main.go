@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"order-service/pkg/dotenv"
 	"order-service/config"
 
 	"order-service/db/migrations"
@@ -36,7 +37,7 @@ func main() {
 		producer.Channel.Close()
 	}()
 
-	err := app.Listen(fmt.Sprintf(":%d", config.APP_PORT))
+	err := app.Listen(fmt.Sprintf(":%s", dotenv.Getenv("APP_PORT")))
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

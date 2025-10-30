@@ -16,8 +16,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const APP_PORT = 5959
-
 type BootstrapConfig struct {
 	DB       *gorm.DB
 	App      *fiber.App
