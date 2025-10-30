@@ -1,4 +1,4 @@
-FROM golang:1.21 AS builder
+FROM golang:alpine3.22 AS builder
 
 WORKDIR /app
 
@@ -17,6 +17,8 @@ WORKDIR /root/
 
 COPY --from=builder /app/server .
 COPY --from=builder /app/worker .
+COPY --from=builder /app/.env .
+COPY --from=builder /app/db/migrations ./db/migrations
 
 COPY entrypoint.sh .
 
