@@ -30,7 +30,7 @@ func (p *ProducerStruct[T]) Send(pattern string, event T) error {
 	}
 
 	if err := p.Producer.Channel.Publish(
-		"",
+		rabbitmq.APP_EXCHANGE_NAME,
 		rabbitmq.APP_QUEUE_NAME,
 		false,
 		false,

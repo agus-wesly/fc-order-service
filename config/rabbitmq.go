@@ -10,7 +10,6 @@ import (
 
 func NewRabbitMqProducer() *rabbitmq.RabbitMQProducer {
 	connection, err := amqp.Dial(
-		// urls: [`amqp://${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`],
 		fmt.Sprintf("amqp://%s:%s", dotenv.Getenv("RABBITMQ_HOST"), dotenv.Getenv("RABBITMQ_PORT")),
 	)
 	if err != nil {
@@ -18,6 +17,19 @@ func NewRabbitMqProducer() *rabbitmq.RabbitMQProducer {
 	}
 
 	channel, err := connection.Channel()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = channel.ExchangeDeclare(
+		rabbitmq.APP_EXCHANGE_NAME, // exchange name
+		"fanout",        // type
+		true,            // durable
+		false,           // auto-deleted
+		false,           // internal
+		false,           // no-wait
+		nil,             // args
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -39,4 +51,58 @@ func NewRabbitMqProducer() *rabbitmq.RabbitMQProducer {
 		Connection: connection,
 		Channel:    channel,
 	}
+}
+
+func NewRabbitMqConsumer() <-chan amqp.Delivery {
+	connection, err := amqp.Dial(
+		fmt.Sprintf("amqp://%s:%s", dotenv.Getenv("RABBITMQ_HOST"), dotenv.Getenv("RABBITMQ_PORT")),
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	channel, err := connection.Channel()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	_, err = channel.QueueDeclare(
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = channel.QueueBind(
+		rabbitmq.APP_QUEUE_NAME,
+		"",                     
+		rabbitmq.APP_EXCHANGE_NAME,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	messages, err := channel.Consume(
+		rabbitmq.APP_QUEUE_NAME,
+		"",                      
+		true,                    
+		false,                   
+		false,                   
+		false,                   
+		nil,                     
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return messages
 }

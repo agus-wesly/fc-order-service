@@ -5,6 +5,7 @@ import (
 )
 
 const APP_QUEUE_NAME = "app_queue"
+const APP_EXCHANGE_NAME = "order_service"
 
 type RabbitMQProducer struct {
 	Connection *amqp.Connection
