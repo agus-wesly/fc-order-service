@@ -13,7 +13,6 @@ func NewOrderHandler() *OrderHandler {
 }
 
 func (c *OrderHandler) OrderCreated(data any) error {
-	log.Println("Is", data)
 	orderEvent, ok := data.(model.OrderEvent)
 	if !ok {
 		return errors.New("Unexpected")
