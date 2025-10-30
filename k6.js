@@ -20,7 +20,7 @@ export default function() {
     let res = http.post(
         `${ORDER_SERVICE_URL}/orders`,
         JSON.stringify({
-            productId: "a81bf18a-6767-4d9f-8cdc-b55ba6c5bd9e"
+            productId: "719a2be1-67cb-4ffb-8ecc-ca718bb30ae0" // Change with correct product id
         }),
         {
             headers: { 'Content-Type': 'application/json' }
